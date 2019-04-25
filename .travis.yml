@@ -2,7 +2,7 @@
 language: python
 
 # Run the test runner using the same version of Python we use.
-python: 3.5
+python: 3.6
 
 # Install the test runner.
 install: pip install tox
@@ -12,8 +12,7 @@ env:
   - TOX_ENV=pep8
   - TOX_ENV=docs
   - TOX_ENV=py27
-  - TOX_ENV=py34
-  - TOX_ENV=py35
+  - TOX_ENV=py36
 script:
   - tox -e $TOX_ENV
 
