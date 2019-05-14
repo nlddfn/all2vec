@@ -10,7 +10,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     zip_safe=True,
     install_requires=[
-        'annoy==1.8.3'
+        'annoy>=1.8.3'
         , 'boto3>=1.4'
         , 'dill>=0.2'
         , 'numpy>=1.12'

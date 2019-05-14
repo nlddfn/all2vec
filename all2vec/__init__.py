@@ -79,8 +79,8 @@ class EntityType(object):
     def __iter__(self):
         """Iterate over object, return (entity_id, vector) tuples."""
         return (EntityVector(
-                    entity_id=entity_id,
-                    vector=self.get_item_vector(entity_id)
+                entity_id=entity_id,
+                vector=self.get_item_vector(entity_id)
                 ) for entity_id in self._ann_map.keys())
 
     def get_nfactor(self):
@@ -162,8 +162,8 @@ class EntitySet(object):
         Optionally normalize the vectors to euclidean length of 1.
         """
         if normalize:
-            vec1 = vec1/np.linalg.norm(vec1)
-            vec2 = vec2/np.linalg.norm(vec2)
+            vec1 = vec1 / np.linalg.norm(vec1)
+            vec2 = vec2 / np.linalg.norm(vec2)
         return np.inner(vec1, vec2)
 
     def get_similar_vector(self, match_vector, match_type, num_similar,
@@ -227,7 +227,7 @@ class EntitySet(object):
             return [item for item in scores if item["score"] > threshold]
         else:
             return self.get_similar_threshold(
-                entity_type, entity_id, match_type, threshold, n_try*10)
+                entity_type, entity_id, match_type, threshold, n_try * 10)
 
     def get_entity_types(self):
         """Helper for getting entity types object."""
@@ -235,7 +235,7 @@ class EntitySet(object):
             'num_entities': etype._ann_obj.get_n_items(),
             'entity_type_id': etype._entity_type_id,
             'entity_type': etype._entity_type,
-            'metric':  etype._metric,
+            'metric': etype._metric,
             'num_trees': etype._ntrees
         } for etype in self._annoy_objects.values()]
 
@@ -244,15 +244,6 @@ class EntitySet(object):
         if not os.path.exists(folder):
             os.makedirs(folder)
         files = []
-        # annoy objects can't be pickled, so save these separately
-        for k, v in self._annoy_objects.items():
-            annoy_filepath = os.path.join(folder, '{}.ann'.format(k))
-            v._ann_obj.save(annoy_filepath)
-            files.append(annoy_filepath)
-        pickle_filepath = os.path.join(folder, 'object.pickle')
-        with open(pickle_filepath, 'wb') as handle:
-            dill.dump(self, handle)
-        files.append(pickle_filepath)
 
         # write entity types
         enttypes = self.get_entity_types()
@@ -261,6 +252,27 @@ class EntitySet(object):
         with open(info_file, 'w') as handle:
             json.dump(enttypes, handle)
         files.append(info_file)
+
+        # annoy objects can't be pickled, so save these separately
+        # and then remove them from the class
+        _annoy_objects = dict(
+            (k, v._ann_obj) for (k, v) in self._annoy_objects.items())
+
+        for k, v in self._annoy_objects.items():
+            annoy_filepath = os.path.join(folder, '{}.ann'.format(k))
+            v._ann_obj.save(annoy_filepath)
+            v._ann_obj = None
+            files.append(annoy_filepath)
+
+        pickle_filepath = os.path.join(folder, 'object.pickle')
+        with open(pickle_filepath, 'wb') as handle:
+            dill.dump(self, handle)
+        files.append(pickle_filepath)
+
+        # reset method for later use
+        for k, v in self._annoy_objects.items():
+            setattr(v, '_ann_obj', _annoy_objects[k])
+
         return files
 
     def load_entities(self, entities, file_getter):
@@ -268,12 +280,15 @@ class EntitySet(object):
         for k in entities:
             annoy_filepath = file_getter.get_file_path('{}.ann'.format(k))
             try:
-                self._annoy_objects[k].load(self,
-                                            annoy_filepath)
+                self._annoy_objects[k].load(self, annoy_filepath)
             except IOError as e:
                 raise IOError(
                     "Error: cannot load file {0}, which was built "
                     "with the model. '{1}'".format(annoy_filepath, e)
+                )
+            except KeyError:
+                raise KeyError(
+                    "Error: cannot find the key {}".format(k)
                 )
 
     @classmethod
