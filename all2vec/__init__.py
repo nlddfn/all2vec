@@ -169,7 +169,7 @@ class EntitySet(object):
     def get_similar_vector(self, match_vector, match_type, num_similar,
                            oversample, normalize):
         """Get similar items from an input vector."""
-        if not match_vector:
+        if match_vector is None:
             return []
 
         # search_k defaults to n * n_trees in Annoy - multiply by oversample
