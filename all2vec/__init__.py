@@ -196,7 +196,7 @@ class EntitySet(object):
 
     def get_scores_vector(self, vector, match_type, match_id_array, normalize):
         """Score a vector and an array of matching entities."""
-        if not vector:
+        if vector is None:
             return []
         scores = []
         for i in match_id_array:
@@ -221,7 +221,7 @@ class EntitySet(object):
         """Get similar items within a score threshold to a query item."""
         scores = self.get_similar(
             entity_type, entity_id, match_type, n_try)
-        if not scores:
+        if scores == []:
             return scores
         if np.any([item["score"] < threshold for item in scores]):
             return [item for item in scores if item["score"] > threshold]
